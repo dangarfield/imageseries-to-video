@@ -1,0 +1,33 @@
+{
+  "name": "imageseries-to-video",
+  "version": "1.0.0",
+  "description": "Image Series to video convert CLI tool",
+  "main": "index.js",
+  "bin": {
+    "i2v": "./index.js"
+  },
+  "keywords": [
+    "image series",
+    "video",
+    "ffmpeg"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dangarfield/imageseries-to-video"
+  },
+  "scripts": {
+    "start": "node ./index.js"
+  },
+  "author": {
+    "name": "Dan Garfield",
+    "url": "https://github.com/dangarfield"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "cli-progress": "^3.9.0",
+    "colors": "^1.4.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "minimist": "^1.2.5"
+  }
+}
