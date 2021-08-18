@@ -5,7 +5,7 @@
 
 ## Installation and usage
 - Install [node js](https://nodejs.org/en/download/)
-- Run `npm i -g imageseries-to-video-cli` to install the tool
+- Run `npm i -g imageseries-to-video` to install the tool
 - Run `i2v` from cmd line in any folder of your choice to 
 
 ## Help
