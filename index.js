@@ -14,7 +14,8 @@ const settings = {
     videoRegexParam: '.mp4',
     videoCodec: 'libx264',
     pixFmt: 'yuv420p',
-    fps: '30'
+    fps: '30',
+    concatRepeats: 0
 }
 
 const replaceLast = (string, target, replacement) => {
@@ -59,6 +60,30 @@ const getGroupedFiles = () => {
 let progressBar
 let processedTotal
 
+const concatRepeatsVideo = (groupedFiles) => {
+    const lines = []
+    for (let i = 0; i < groupedFiles.length; i++) {
+        const line = `file '${groupedFiles[i].video}'`
+        for (var j = 0; j < settings.concatRepeats; j++) lines.push(line)
+    }
+
+    const listTxtPath = path.join(settings.folderPath, 'list.txt')
+    fs.writeFileSync(listTxtPath, lines.join('\n'))
+    const allVideo = groupedFiles[0].video.replace('.mp4', '-all.mp4')
+
+    return new Promise(resolve => {
+        ffmpeg().input(listTxtPath)
+        .inputOptions(['-f concat', '-safe 0'])
+        .outputOptions('-c copy')
+        .on('end', function() {
+            processedTotal++
+            progressBar.update(processedTotal)
+            fs.unlinkSync(listTxtPath)
+            resolve()
+        })
+        .save(allVideo)
+    })
+}
 const createVideo = (groupedFile) => {
     return new Promise(resolve => {
         ffmpeg().input(groupedFile.seriesRegex)
@@ -83,11 +108,15 @@ const createVideos = async (groupedFiles) => {
         barIncompleteChar: '\u2591',
         hideCursor: true
       })
-    progressBar.start(groupedFiles.length, 0)
+    const totalFiles = groupedFiles.length + (settings.concatRepeats ? 1:0)
+    progressBar.start(totalFiles, 0)
     processedTotal = 0
     
     for (let i = 0; i < groupedFiles.length; i++) {
         await createVideo(groupedFiles[i])
+    }
+    if (settings.concatRepeats > 0) {
+        await concatRepeatsVideo(groupedFiles)
     }
     progressBar.stop()
 }
@@ -101,6 +130,7 @@ const updateParams = () => {
         console.log(chalk`{cyan HELP:} {blue -v .mp4} - Output file name, replaces first frame regex, eg any-file{green .mp4}`)
         console.log(chalk`{cyan HELP:} {blue -c libx264} - Video codec`)
         console.log(chalk`{cyan HELP:} {blue -p yuv420p} - Pixel format (ffmpeg -> pix_fmt)`)
+        console.log(chalk`{cyan HELP:} {blue -a 0} - Will also create a concatenated video of all videos with -a {blue 2} repeats, any-file{green -all.mp4}`)
         process.exit(0)
     }
     if (argv.r) {
@@ -118,9 +148,12 @@ const updateParams = () => {
     if (argv.p) {
         settings.pixFmt = argv.p
     }
+    if (argv.a) {
+        settings.concatRepeats = argv.a
+    }
 
     console.log(chalk`{cyan INFO:} Path:     {blue ${settings.folderPath}}`)
-    console.log(chalk`{cyan INFO:} Settings: -r {blue ${settings.fps}} -f {blue ${settings.firstFrameRegexParam}} -v {blue ${settings.videoRegexParam}} -c {blue ${settings.videoCodec}} -p {blue ${settings.pixFmt}}`)
+    console.log(chalk`{cyan INFO:} Settings: -r {blue ${settings.fps}} -f {blue ${settings.firstFrameRegexParam}} -v {blue ${settings.videoRegexParam}} -c {blue ${settings.videoCodec}} -p {blue ${settings.pixFmt}} -a {blue ${settings.concatRepeats}}`)
 }
 const init = async () => {
     updateParams()
